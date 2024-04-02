@@ -3,7 +3,9 @@ from graphviz import Digraph
 import regexLib
 import astLib
 import sys
-
+import AfdLib
+import AfLib
+import pickle
 
 
 def eliminar_comentarios_yalex(contenido):
@@ -56,7 +58,7 @@ def normalizar_y_separar(contenido):
     - Tuple[List[str], List[str]]: Una tupla conteniendo dos listas, una con las definiciones y otra con todas las reglas.
     """
     # Normalizar saltos de linea y espacios extra
-    contenido_normalizado = contenido.replace('\n', ' ')
+    contenido_normalizado = contenido
     while '  ' in contenido_normalizado:
         contenido_normalizado = contenido_normalizado.replace('  ', ' ')
     
@@ -116,6 +118,32 @@ def definiciones_a_diccionario(definiciones):
         diccionario_definiciones[clave] = valor
 
     return diccionario_definiciones
+
+
+def reglas_a_diccionario(reglas):
+    """
+    Convierte una lista de reglas en un diccionario, donde cada regla
+    puede contener saltos de linea entre el identificador y su valor.
+    
+    Args:
+    - definiciones (List[str]): Lista de definiciones extraidas del archivo de especificacion.
+    
+    Returns:
+    - Dict[str, str]: Diccionario con las definiciones mapeadas a sus expresiones.
+    """
+    diccionario_reglas = {}
+    for regla in reglas:
+        if " { " in regla:  # Asume que una definición válida debe tener " { "
+            partes = regla.split(" { ")
+            identificador = partes[0].replace("'", "")  # Elimina comillas del identificador
+            valor = "{ " + partes[1]  # Reconstruye el valor asegurando que inicie con "{ "
+        else:
+            identificador = regla  # Para casos como 'ws'
+            valor = "{ return None }"  # Valor por defecto para elementos sin definición explícita
+        
+        diccionario_reglas[identificador] = valor
+
+    return diccionario_reglas
 
 
 def explotar_valores(diccionario):
@@ -269,80 +297,88 @@ def expandir_clases_caracteres(diccionario):
 def convertir_reglas_a_diccionario(reglas):
     diccionario_de_reglas = {}
     for regla in reglas:
-        # Buscar si la regla contiene un bloque de retorno
-        if '{ return' in regla:
-            # Separa la regla por " { return " para obtener clave y valor
-            clave, resto = regla.split(' { return ')
-            valor = resto.rstrip(' }')  # Elimina el " }" final
+        # Buscar si la regla contiene un bloque entre llaves
+        if '{' in regla:
+            # Separa la regla por el primer '{' para obtener la clave y el valor
+            partes = regla.split('{', 1)
+            clave = partes[0].strip()
+            valor = partes[1].rstrip('}').strip()  # Elimina el "}" final y espacios adicionales
         else:
-            clave = regla
-            valor = None  # Asigna None si no hay "return"
-        # No se elimina las comillas de los extremos de la clave
+            clave = regla.strip()
+            valor = None  # Asigna None si no hay un bloque entre llaves
+        # Asigna la clave y el valor al diccionario
         diccionario_de_reglas[clave] = valor
     return diccionario_de_reglas
 
 
-with open('slr-4.yal', 'r') as archivo:
-    contenido_archivo = archivo.read()
-
-contenido_sin_comentarios = eliminar_comentarios_yalex(contenido_archivo)
-definiciones, reglas = normalizar_y_separar(contenido_sin_comentarios)
-diccionario_definiciones = definiciones_a_diccionario(definiciones)
-
-diccionario_con_multiples_rangos_alfabeticos_expandidos = expandir_multiples_rangos_alfabeticos(diccionario_definiciones)
-#diccionario_con_rangos_expandidos_sin_re = expandir_rangos_numericos(diccionario_con_multiples_rangos_alfabeticos_expandidos)
-# diccionario_con_clases_caracteres_expandidos = expandir_clases_caracteres(diccionario_con_rangos_expandidos_sin_re)
-
-diccionario_explotado = explotar_valores(diccionario_con_multiples_rangos_alfabeticos_expandidos)
 
 
+def generate_scan(path):
+    try:    
+        with open(path, 'r') as archivo:
+            contenido_archivo = archivo.read()
 
-print("-------------------------------------------------------------------------------")
+        contenido_sin_comentarios = eliminar_comentarios_yalex(contenido_archivo)
+        definiciones, reglas = normalizar_y_separar(contenido_sin_comentarios)
+        diccionario_definiciones = definiciones_a_diccionario(definiciones)
+        diccionario_reglas = reglas_a_diccionario(reglas)
+        #diccionario_con_multiples_rangos_alfabeticos_expandidos = expandir_multiples_rangos_alfabeticos(diccionario_definiciones)
+        #diccionario_con_rangos_expandidos_sin_re = expandir_rangos_numericos(diccionario_con_multiples_rangos_alfabeticos_expandidos)
+        #diccionario_con_clases_caracteres_expandidos = expandir_clases_caracteres(diccionario_con_rangos_expandidos_sin_re)
+        diccionario_explotado = explotar_valores(diccionario_definiciones)
 
-for clave, valor in diccionario_explotado.items():
-    print(f"{clave}: {valor}")
+        diccionario_de_reglas = convertir_reglas_a_diccionario(reglas)
+        claves = list(diccionario_de_reglas.keys())
+        valores_para_unir = []
+        for clave in diccionario_de_reglas.keys():
+            if clave in diccionario_explotado:
+                valor = diccionario_explotado[clave]
+            else:
+                valor = clave
+            # Verifica si el valor contiene '.', si es así, encierra '.' con comillas simples
+            valor_modificado = valor.replace('.', "'.'")
+            valores_para_unir.append(valor_modificado)
 
-print("-------------------------------------------------------------------------------")
+        # arbol_no = 0
+        # for item in valores_para_unir:
+        #     arbol_no=arbol_no+1
+        #     postfix = regexLib.shunting_yard(item)
+        #     ast_root = astLib.create_ast(postfix)
+        #     ast_graph = astLib.plot_tree(ast_root)
+        #     nombre = "arbol" + str(arbol_no)
+        #     ast_graph.view(filename=nombre, cleanup=True)
 
+        valores_para_unir = [item + "#" for item in valores_para_unir]
+        resultado = '|'.join(valores_para_unir)
+        resultado = '('+resultado+')'
+        print(resultado)
 
+        for clave, valor in diccionario_reglas.items():
+            print(f"{clave}: {valor}")
 
+        # postfixCompleto = regexLib.shunting_yard(resultado)            
+        # ast_root_complete = astLib.create_ast(postfixCompleto)
+        # ast_graph_complete = astLib.plot_tree(ast_root_complete)
+        # nombre = "arbol completo"
+        # ast_graph_complete.view(filename=nombre, cleanup=True)
 
-diccionario_de_reglas = convertir_reglas_a_diccionario(reglas)
-claves = list(diccionario_de_reglas.keys())
-valores_para_unir = []
-for clave in diccionario_de_reglas.keys():
-    if clave in diccionario_explotado:
-        valor = diccionario_explotado[clave]
-    else:
-        valor = clave
-    # Verifica si el valor contiene '.', si es así, encierra '.' con comillas simples
-    valor_modificado = valor.replace('.', "'.'")
-    valores_para_unir.append(valor_modificado)
+        postfix = regexLib.shunting_yard(resultado)
+        ast_root = astLib.create_ast(postfix)
+        afd = AfdLib.ast_to_afdd(regexLib.regexAlphabet(postfix),ast_root)
+        uniquePos = sorted(list(set(state.acceptPos for state in afd.accept)))
+        for state in afd.accept:
+                state.action = list(diccionario_reglas.values())[uniquePos.index(state.acceptPos)]
+        # afd_graph = AfLib.plot_af(afd.start)
+        # afd_graph.view(filename='AFD',cleanup=True)
 
- 
-
-
-arbol_no = 0
-for item in valores_para_unir:
-    arbol_no=arbol_no+1
-    postfix = regexLib.shunting_yard(item)
-    ast_root = astLib.create_ast(postfix)
-    ast_graph = astLib.plot_tree(ast_root)
-    nombre = "arbol" + str(arbol_no)
-    ast_graph.view(filename=nombre, cleanup=True)
-    
-
-resultado = '|'.join(valores_para_unir)
-print(resultado)
-postfixCompleto = regexLib.shunting_yard(resultado)            
-ast_root_complete = astLib.create_ast(postfixCompleto)
-ast_graph_complete = astLib.plot_tree(ast_root_complete)
-nombre = "arbol completo"
-ast_graph_complete.view(filename=nombre, cleanup=True)
-
-    
-
-
+        with open('afd.pkl', 'wb') as archivo_salida:
+            pickle.dump(afd, archivo_salida)
+            
+        return True
+    except Exception as e:
+        # Si ocurre una excepción, imprime el mensaje de error (opcional) y devuelve False
+        print(f"Ocurrió un error: {e}")
+        return False
 
 
 
