@@ -376,7 +376,6 @@ def generate_scan(path):
             
         return True
     except Exception as e:
-        # Si ocurre una excepción, imprime el mensaje de error (opcional) y devuelve False
         print(f"Ocurrió un error: {e}")
         return False
 

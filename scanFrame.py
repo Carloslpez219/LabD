@@ -32,4 +32,6 @@ if __name__ == "__main__":
             # Escribir el contenido al archivo
             archivo.write(contenido)
 
-        print(f'Archivo {nombre_archivo} generado con exito.')
+        print("---------------------------------------")
+        print(f'{nombre_archivo} generado!')
+        print("---------------------------------------")

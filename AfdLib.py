@@ -223,30 +223,21 @@ def afd_to_afdmin(alphabet, afd):
     afd_min = AFD()
 
     for group in partition:
-        # Crea un estado que representa todo el grupo, si uno de los estados es de aceptación lo marca asi.
-        # Inicializar el estado representativo sin marcarlo como de aceptación por defecto.
         representative = AFDState(afd_min)
         representative.is_accept = False
 
-        # Ver cada estado para ver si es de aceptacion
         for state in group:
             if state.is_accept:
                 representative.is_accept = True
-                break  # Si se encuentra un estado de aceptación, ya no importan los demas.
+                break
 
         if representative.is_accept:
-            #agrega el estado a los estados de aceptación
             afd_min.accept.add(representative)
         for state in group:
-            #relaciona el estado original al estado representativo en el AFD minimizado
             state_relations[state] = representative
-        if afd.start in group:
-            #Si el estado inicial del AFD original, entonces el estado representativo se establece como el estado inicial del AFD minimizado. 
+        if afd.start in group: 
             afd_min.start = representative
 
-
-    #Paso 4 algoritmo
-    #Asignacion de las nuevas transiciones
     for old_state, new_state in state_relations.items():
         for c, old_transitions in old_state.transitions.items():
             new_destination_state = state_relations.get(old_transitions[0], None)
@@ -254,9 +245,7 @@ def afd_to_afdmin(alphabet, afd):
                 new_state.transitions[c] = [new_destination_state]
 
     return afd_min
-
-
-#Simulacion de AFD con cadena completa    
+ 
 def AFD_simulation(afd,w):
     F = afd.accept
     So = set()
@@ -289,16 +278,9 @@ def AFD_simulation(afd,w):
         return "no"
     
 def createAFD(item):
-    #Construccion de postfix
     postfix = regexLib.shunting_yard(item)
-            
-    #Construccion AST
     ast_root = astLib.create_ast(postfix)
-            
-    #Construccion AFD
     afd = ast_to_afdd(regexLib.regexAlphabet(postfix),ast_root)
-            
-    #Minimizacion AFD
     afdmin = afd_to_afdmin(regexLib.regexAlphabet(postfix),afd)
     
     return afdmin
@@ -317,16 +299,14 @@ def step_simulate_AFD(afd,c,lookAhead):
 def segmentRecognize(afd,i,content):
     accept = (False,0,"")
     first = i
-    # Bucle hasta que se alcance el final del contenido
-    while i <= len(content):  # Asegura que haya espacio para lookAhead
-        char = content[i] if i<len(content) else ""  # Caracter actual
-        lookAhead = content[i + 1] if i<len(content)-1 else ""  # Caracter siguiente
+    while i <= len(content):
+        char = content[i] if i<len(content) else "" 
+        lookAhead = content[i + 1] if i<len(content)-1 else "" 
         
-        # Procesa el caracter aqui
         res = step_simulate_AFD(afd, char, lookAhead)
         if res[0] == 0:
             last = i+1
-            accept = (True,last,content[first:last],res[1]) #Estado de aceptacion, ultima posicion de lookAhead, contenido aceptado, accion
+            accept = (True,last,content[first:last],res[1])
         
         elif res[0] == 2:
             if accept[0]:
@@ -334,53 +314,49 @@ def segmentRecognize(afd,i,content):
             else:
                 return (False,i,"","")
 
-        i += 1  # Incrementa la posicion para el proximo caracter
+        i += 1
         
 def genericFunction(content):
-    # Define un espacio de nombres local para ejecutar la función.
     local_namespace = {}
-
-    # Inicia la definición de la función con el código proporcionado.
     codigo_funcion = "def tempFunction():\n"
-    
-    # Agrega las líneas de contenido, asegurándote de que estén indentadas correctamente.
     if content.strip():
         for linea in content.split('\n'):
             codigo_funcion += f"    {linea}\n"
     else:
         codigo_funcion += "    return None\n"
     
-    # Termina la función y prepara la ejecución.
     codigo_funcion += "\nresultado = tempFunction()"
 
     try:
-        # Ejecuta la definición de la función y luego la llama.
         exec(codigo_funcion, globals(), local_namespace)
     except SyntaxError as se:
         print(f"Error de sintaxis: {se}")
         return None
     except Exception as e:
-        print(f"Error en la definición del código: {e}")
+        print(f"Error en la ejecución del código: {e}")
         return None
 
-    # Devuelve el resultado de la función si fue ejecutada correctamente.
     return local_namespace.get('resultado')
             
 def tokensRecognize(afd,txtContent):
-    # Inicializa la posicion
     first = 0
     while first<=len(txtContent):
         res = segmentRecognize(afd,first,txtContent)
     
+        nextFirst = res[1]
+
         if res[0]:
             resultado = genericFunction(res[3][2:-1])
             resultado = resultado if resultado!=None else ""
             print(resultado)
-        else:
-            message = f"ERROR al reconocer archivo txt en caracter no. {res[1]}: "
+        elif not res[0] and first!=len(txtContent):
+            message = f"ERROR en el caracter {res[1]}: "
+            nextFirst+=1
+            print(message + " " + "'" +txtContent[first:nextFirst] + "'")
                 
-            return False
+        else:
+            nextFirst+=1
 
-        first = res[1]
+        first = nextFirst
             
     return True
