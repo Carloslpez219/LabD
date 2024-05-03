@@ -12,7 +12,7 @@ if __name__ == "__main__":
         afd = pickle.load(archivo_entrada)
             
     #Lectura del documento txt
-    with open('YAPar5.txt', 'r', encoding='utf-8') as file:
+    with open('YAPar2.txt', 'r', encoding='utf-8') as file:
         txtContent = file.read()  # Leer todo el contenido del archivo
         
     AfdLib.tokensRecognize(afd,txtContent)
