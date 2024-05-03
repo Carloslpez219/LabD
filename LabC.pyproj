@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>4419c09a-5cc8-4704-bf58-ab92a6def913</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>scanFrame.py</StartupFile>
+    <StartupFile>LabE.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -28,6 +28,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="LabC.py" />
+    <Compile Include="LabE.py" />
+    <Compile Include="LR0.py" />
     <Compile Include="regexLib.py">
       <SubType>Code</SubType>
     </Compile>

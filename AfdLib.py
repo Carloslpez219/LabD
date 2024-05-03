@@ -51,7 +51,7 @@ def ast_to_afdd(alphabet,ast_root):
     afd.start = states[0]
     
     for elemento in afd.start.subset:
-        if elemento in Node.posTable['#']:
+        if elemento in Node.posTable['■']:
             afd.accept.add(states[0])
             states[0].is_accept = True
             #Persistencia del Pos de #
@@ -92,7 +92,7 @@ def ast_to_afdd(alphabet,ast_root):
                 newState = AFDState(afd,subset)
                 
                 for elemento in subset:
-                    if elemento in Node.posTable['#']:
+                    if elemento in Node.posTable['■']:
                         afd.accept.add(newState)
                         newState.is_accept = True
                         #Persistencia del Pos de #
@@ -316,27 +316,31 @@ def segmentRecognize(afd,i,content):
 
         i += 1
         
-def genericFunction(content):
-    local_namespace = {}
-    codigo_funcion = "def tempFunction():\n"
-    if content.strip():
+def genericFunction(value, content):
+    local_namespace = {}  # Corrected dictionary initialization
+    local_namespace['value'] = value
+
+    # Start defining the function as a string
+    codigo_funcion = 'def tempFunction(value):\n'
+    if content:
+        # Correctly format each line of the input content into the function definition
         for linea in content.split('\n'):
-            codigo_funcion += f"    {linea}\n"
+            codigo_funcion += f'    {linea}\n'
     else:
-        codigo_funcion += "    return None\n"
-    
-    codigo_funcion += "\nresultado = tempFunction()"
+        codigo_funcion += '    return None\n'
+
+    codigo_funcion += 'resultado = tempFunction(value)\n'  # Correct line break
 
     try:
+        # Execute the function definition and then call the function
         exec(codigo_funcion, globals(), local_namespace)
-    except SyntaxError as se:
-        print(f"Error de sintaxis: {se}")
-        return None
-    except Exception as e:
-        print(f"Error en la ejecución del código: {e}")
-        return None
 
-    return local_namespace.get('resultado')
+        # Return the result of the function
+        return local_namespace['resultado']
+
+    except Exception as e:
+        print(f"Error al ejecutar el codigo: {e}")
+        return None
             
 def tokensRecognize(afd,txtContent):
     first = 0
@@ -345,12 +349,15 @@ def tokensRecognize(afd,txtContent):
     
         nextFirst = res[1]
 
+        print("------------------------------------------------------------------------------------")
+
         if res[0]:
-            resultado = genericFunction(res[3][2:-1])
+            print("Cadena o caracter aceptado => " + "'" + res[2] + "'")
+            resultado = genericFunction(res[2], res[3][2:-1])
             resultado = resultado if resultado!=None else ""
-            print(resultado)
+            print(resultado + " \n")
         elif not res[0] and first!=len(txtContent):
-            message = f"ERROR en el caracter {res[1]}: "
+            message = f"ERROR en el caracter {res[1]}  (No aceptado): "
             nextFirst+=1
             print(message + " " + "'" +txtContent[first:nextFirst] + "'")
                 
@@ -360,3 +367,64 @@ def tokensRecognize(afd,txtContent):
         first = nextFirst
             
     return True
+
+def parseGrammar(value):
+    import pickle 
+
+   # Cargar el diccionario de gramática existente
+    with open('grammar.pkl', 'rb') as archivo_entrada_grammar:
+        grammar = pickle.load(archivo_entrada_grammar)
+
+    # Comprobar y procesar la entrada
+    if value[-1] == ';':
+        value = value[:-1]  # Eliminar el punto y coma final si está presente
+    else:
+        print("Advertencia: La entrada no termina con ';', se procederá a procesar.")
+
+    parts = value.split(':')
+    if len(parts) != 2:
+        print("Error: Formato incorrecto, se esperaba 'head: body'.")
+        return
+
+    head = parts[0].strip()
+    body = []
+    for item in parts[1].split('|'):
+        body.append(item.strip())
+
+    # Actualizar el diccionario de gramática
+    grammar[head] = body
+
+    # Guardar el diccionario actualizado
+    with open('grammar.pkl', 'wb') as archivo_grammar:
+        pickle.dump(grammar, archivo_grammar)
+
+            
+
+
+
+
+
+
+
+
+            
+def compareTokens(value):
+    import pickle 
+    
+    with open('compare_tokens.pkl', 'rb') as archivo_entrada_compare_tokens:
+        compare_tokens = pickle.load(archivo_entrada_compare_tokens)
+
+    lineas = value.strip().split('\n')
+    
+    tokens = compare_tokens
+
+    for linea in lineas:
+
+        if '%token' in linea:
+            partes = linea.replace('%token', '').strip().split()
+            tokens.extend(partes) 
+
+    with open('compare_tokens.pkl', 'wb') as archivo_compare_tokens:
+        pickle.dump(tokens, archivo_compare_tokens)
+
+    

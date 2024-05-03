@@ -1,0 +1,25 @@
+{#Diego Franco - 20240 prueba}
+
+
+let delim = [' ''\t''\n']
+let ws = delim+
+let digit = (0|1|2|3|4|5|6|7|8|9)
+let digits = digit+
+let integer = digits
+let float = digits(.digits)
+let letra = ['a'-'z''A'-'Z']
+let identificador = (letra)(letra|digit)*abc
+let cadenas = '"'(digit|letra|ws)*'"'
+
+
+
+rule tokens = 
+  | ws        { print('WHITESPACE') } 
+  | integer    { print("ENTEROS") }
+  | float      { print("DECIMALES") }
+  | if         { print("IF") }
+  | for        { print("FOR") }
+  | identificador { print("IDENTIFICADOR") }
+  | cadenas { print("CADENA DE CARACTERES") }
+
+{#Diego Franco - 20240} 

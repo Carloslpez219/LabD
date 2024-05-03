@@ -1,0 +1,30 @@
+{#Diego Franco - 20240}
+
+
+let delim = [' ''\t''\n']
+let ws = delim+
+let digit = (0|1|2|3|4|5|6|7|8|9)
+let digits = digit+
+let integer = digits
+let letra = ['a'-'z''A'-'Z']
+let identificador = (letra)(letra|digit)*123
+
+
+
+rule tokens = 
+  | ws        { print('WHITESPACE') } 
+  | integer    { print("ENTEROS") }
+  | '+'       { print("SUMA") }
+  | '*'       { print("POR") }
+  | '('       { print("LPAREN") }
+  | ')'       { print("RPAREN") }
+  | '-'       { print("MENOS") }
+  | '/'       { print("DIV") }
+  | '='       { print("IGUAL") }
+  | '^'       { print("POTENCIA") }
+  | if         { print("IF") }
+  | while      { print("WHILE") }
+  | for        { print("FOR") }
+  | identificador { print("IDENTIFICADOR") }
+
+{#Diego Franco - 20240} 

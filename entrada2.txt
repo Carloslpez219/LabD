@@ -1,0 +1,2 @@
+ada -11 1 = 12 untextosuper11212largo ifvariable123 if + /
+prueba 12 for while fortuna 34 1 = 35 ifforwhile
