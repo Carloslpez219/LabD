@@ -1,0 +1,21 @@
+%token id
+%token plus
+%token times
+%token lparen rparen
+%token ws
+IGNORE ws
+
+%%
+
+expression:
+    expression PLUS term
+  | term
+;
+term:
+    term TIMES factor
+  | factor
+;
+factor:
+    LPAREN expression RPAREN
+  | ID
+;

@@ -1,0 +1,42 @@
+(* Lexer para YAPar *)
+
+{
+grammar = dict()
+}
+
+(* Comentarios *)
+let comment = /\*['A'-'Z''a'-'z'"ÁÉÍÓÚ""áéíóú"'0'-'9'"\s"",_+-.?!$~`|/:;=<>#^@\""\[\]"]*\*/
+
+(* Espacios en blanco *)
+let delim = [' ''\t''\n']
+let ws = delim+
+
+(* Simplificaciones *)
+let letter = ['A'-'Z''a'-'z']
+let digit = ['0'-'9']
+let id = (letter)(letter|digit)*
+let minusId = ['a'-'z'](['a'-'z']|digit)*
+let value = ([' ''\t']+id)+
+let term = ([' ''\t''\n']*id)+
+
+(* Seccion de Tokens *)
+let tokenDefinition = "%token"(value)
+let ignoreDefinition = "IGNORE"(value)
+
+(* Seccion de Producciones *)
+let productionSection = "%%"
+let production = (minusId)':'(term)?(ws)*('|'(term)?(ws)*)*';'
+
+rule tokens = 
+  | comment		{ return "COMMENT" }
+  | ws			{ return "WHITESPACE" }
+  | tokenDefinition	{ import AfdLib
+AfdLib.compareTokens(value) }
+  | ignoreDefinition	{ return "IGNOREDEF" }
+  | productionSection	{ return "PRODSECTION" }
+  | production		{ import AfdLib
+AfdLib.parseGrammar(value) }
+
+{
+
+}
