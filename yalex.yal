@@ -32,7 +32,8 @@ rule tokens =
   | ws			{ return "WHITESPACE" }
   | tokenDefinition	{ import AfdLib
 AfdLib.compareTokens(value) }
-  | ignoreDefinition	{ return "IGNOREDEF" }
+  | ignoreDefinition	{ import AfdLib
+AfdLib.ignoreTokens(value) }
   | productionSection	{ return "PRODSECTION" }
   | production		{ import AfdLib
 AfdLib.parseGrammar(value) }

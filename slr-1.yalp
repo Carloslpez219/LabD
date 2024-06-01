@@ -1,9 +1,9 @@
-%token id
-%token plus
-%token times
-%token lparen rparen
-%token ws
-IGNORE ws
+%token ID
+%token PLUS
+%token TIMES
+%token LPAREN RPAREN
+%token WS
+IGNORE WS
 
 %%
 

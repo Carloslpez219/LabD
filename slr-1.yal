@@ -1,7 +1,6 @@
 {
 print("header")
 }
-
 (* Lexer para Gramática No. 1 - Expresiones aritméticas simples para variables *)
 
 (* Introducir cualquier header aqui *)
@@ -11,25 +10,15 @@ let ws = delim+
 let letter = ['A'-'Z''a'-'z']
 let digit = ['0'-'9']
 let id = (letter)(letter|digit)*
-let plus = ['+']
-let times = ['*']
-let lparen = ['(']
-let rparen = [')']
 
 rule tokens = 
-  | ws        
-  | id        
-  | plus      
-  | times       
-  | lparen
-  | rparen     
+  | ws        { print("WS") }
+  | id        { print("ID") }               (* Cambie por una acción válida, que devuelva el token *)
+  | '+'       { print("PLUS") }
+  | '*'       { print("TIMES") }
+  | '('       { print("LPAREN") }
+  | ')'       { print("RPAREN") }
 
-(*
-lista
-id , er
-ws, er1
-id, er2
-plus, er3
-token1, '*'
-token2, 
-*)
+{
+print("trailer")
+}

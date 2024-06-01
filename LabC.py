@@ -382,7 +382,7 @@ def convertir_reglas_a_diccionario(reglas):
 
 
 
-def generate_scan(path):
+def generate_scan(path, doc):
     try:    
         with open(path, 'r', encoding='utf-8') as archivo:
             contenido_archivo = archivo.read()
@@ -457,20 +457,27 @@ def generate_scan(path):
                 state.action = list(diccionario_reglas.values())[uniquePos.index(state.acceptPos)]
         # afd_graph = AfLib.plot_af(afd.start)
         # afd_graph.view(filename='AFD',cleanup=True)
+        
+        
 
-        with open('afd.pkl', 'wb') as archivo_salida:
+        with open(f"afd_{doc}.pkl", 'wb') as archivo_salida:
             pickle.dump(afd, archivo_salida)
             
-        with open('header.pkl', 'wb') as archivo_salida_header:
+        with open(f"header.pkl", 'wb') as archivo_salida_header:
             pickle.dump(header, archivo_salida_header)
             
-        with open('footer.pkl', 'wb') as archivo_salida_footer:
+        with open(f"footer.pkl", 'wb') as archivo_salida_footer:
             pickle.dump(footer, archivo_salida_footer)
             
         grammar = dict()
 
-        with open('grammar.pkl', 'wb') as archivo_grammar:
+        with open(f"grammar.pkl", 'wb') as archivo_grammar:
             pickle.dump(grammar, archivo_grammar)
+            
+        ignore_tokens = set()
+
+        with open('ignore_tokens.pkl', 'wb') as archivo_ignore_tokens:
+            pickle.dump(ignore_tokens, archivo_ignore_tokens)
             
         compare_tokens = []
 

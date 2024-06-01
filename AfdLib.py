@@ -398,16 +398,23 @@ def parseGrammar(value):
     with open('grammar.pkl', 'wb') as archivo_grammar:
         pickle.dump(grammar, archivo_grammar)
 
-            
 
+def ignoreTokens(value):
+    import pickle
 
+    # Cargar el diccionario de gramática existente
+    with open('ignore_tokens.pkl', 'rb') as archivo_entrada_token:
+        ignore_tokens = pickle.load(archivo_entrada_token)
 
+    for item in value[6:].split(' '):
+        if item != '':
+            ignore_tokens.add(item)
 
+    # Guardar el diccionario actualizado
+    with open('ignore_tokens.pkl', 'wb') as archivo_token:
+        pickle.dump(ignore_tokens, archivo_token)
 
-
-
-
-            
+              
 def compareTokens(value):
     import pickle 
     
@@ -427,4 +434,75 @@ def compareTokens(value):
     with open('compare_tokens.pkl', 'wb') as archivo_compare_tokens:
         pickle.dump(tokens, archivo_compare_tokens)
 
+############################################################### YAL
+
+def segmentRecognizeYAL(afd,i,content):
     
+    accept = (False,0,"")
+    first = i
+    while i <= len(content):
+        char = content[i] if i<len(content) else "" 
+        lookAhead = content[i + 1] if i<len(content)-1 else "" 
+        
+        res = step_simulate_AFD(afd, char, lookAhead)
+        if res[0] == 0:
+            last = i+1
+            accept = (True,last,content[first:last],res[1])
+        
+        elif res[0] == 2:
+            if accept[0]:
+                return accept
+            else:
+                return (False,i,"","")
+
+        i += 1
+        
+
+def extract_token(action):
+    start = action.find('print(')
+    if start == -1:
+        return None
+    start_quote = action.find('"', start) if action.find('"', start) != -1 else action.find("'", start)
+    end_quote = action.find('"', start_quote + 1) if action.find('"', start_quote + 1) != -1 else action.find("'", start_quote + 1)
+    if start_quote != -1 and end_quote != -1:
+        return action[start_quote + 1:end_quote]
+    return None
+        
+        
+def tokensRecognizeYAL(afd,txtContent):
+    import pickle 
+    
+    with open('input_tokens.pkl', 'rb') as archivo_entrada:
+        input_tokens = pickle.load(archivo_entrada)
+
+    first = 0
+    while first<=len(txtContent):
+        res = segmentRecognizeYAL(afd,first,txtContent)
+    
+        nextFirst = res[1]
+
+        print("------------------------------------------------------------------------------------")
+
+        if res[0]:
+            print("Cadena o caracter aceptado => " + "'" + res[2] + "'")
+            resultado = genericFunction(res[2], res[3][2:-1])
+            resultado = resultado if resultado!=None else ""
+
+            token = extract_token(res[3])
+            if token:
+                input_tokens.append(token)
+            with open('input_tokens.pkl', 'wb') as archivo_entrada:
+                pickle.dump(input_tokens, archivo_entrada)
+
+            print(resultado + " \n")
+        elif not res[0] and first!=len(txtContent):
+            message = f"ERROR en el caracter {res[1]}  (No aceptado): "
+            nextFirst+=1
+            print(message + " " + "'" +txtContent[first:nextFirst] + "'")
+                
+        else:
+            nextFirst+=1
+
+        first = nextFirst
+            
+    return True
